@@ -20,10 +20,10 @@ metadata:
       - name: CODEX_PPT_HOME
         required: false
         description: Runtime home override.
-    homepage: https://github.com/ningzimu/codex-ppt-skill
+    homepage: https://github.com/JiangKeJacky/ke-ppt-skill
 ---
 
-# Codex PPT
+# Ke PPT
 
 ## Overview
 
@@ -154,4 +154,4 @@ Subagents must not edit `outline.md`, `deck_spec.json`, other slide jobs, `origi
 
 ## Documentation and Updates
 
-For source, docs, install, config, and examples, see [ningzimu/codex-ppt-skill](https://github.com/ningzimu/codex-ppt-skill).
+For source, docs, install, config, and examples, see [JiangKeJacky/ke-ppt-skill](https://github.com/JiangKeJacky/ke-ppt-skill).

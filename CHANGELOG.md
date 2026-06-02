@@ -4,6 +4,14 @@ Release notes are generated from this file. Keep changelog entries in English.
 
 ## Unreleased
 
+### Improvements
+
+- Rename the bundled skill directory and skill identifier from `codex-ppt` to `ke-ppt`.
+
+### Documentation
+
+- Update README installation and local development examples for the `ke-ppt` skill.
+
 ## 0.4.1
 
 ### Fixes

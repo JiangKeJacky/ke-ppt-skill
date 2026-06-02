@@ -5,8 +5,6 @@ set -euo pipefail
 API_BASE="${VE_API_BASE:-https://api.vectorengine.ai}"
 API_KEY="${VE_GPT_IMAGE_API_KEY:-}"
 MODEL="${VE_IMAGE_MODEL:-gpt-image-2}"
-SVG_MODEL="${VE_SVG_MODEL:-gpt-4o}"
-SVG_BASE_URL="${VE_SVG_BASE_URL:-}"
 SIZE="${VE_IMAGE_SIZE:-1920x1080}"
 N="${VE_IMAGE_N:-1}"
 QUALITY="${VE_IMAGE_QUALITY:-low}"
@@ -14,8 +12,6 @@ FORMAT="${VE_IMAGE_FORMAT:-png}"
 OUTPUT_DIR="${VE_IMAGE_OUTPUT_DIR:-.}"
 IMAGES=()
 MASK=""
-SVG_MODE=0
-SVG_ONLY=0
 
 usage() {
     cat <<EOF
@@ -24,8 +20,6 @@ Usage: $(basename "$0") [OPTIONS] <prompt>
 Modes:
   Text-to-Image (default):  Generate image from text prompt only
   Image-to-Image:           Use -i/--image to provide source image(s) for editing
-  SVG Mode (--svg):         Call chat/completions to generate SVG code with <text>
-                            elements, then render to PNG via rsvg-convert
 
 Options:
   -m, --model MODEL      Model name (default: gpt-image-2)
@@ -39,16 +33,12 @@ Options:
       --mask FILE        Mask image for edit (transparent areas indicate where to edit)
   -o, --output DIR       Output directory (default: .)
   -k, --key KEY          API key (or set VE_GPT_IMAGE_API_KEY env var)
-      --svg              SVG mode: generate SVG code via chat/completions
-      --svg-model MODEL  Model for SVG generation (default: same as --model)
-      --svg-only         In SVG mode, only save .svg file (skip PNG rendering)
   -h, --help             Show this help message
 
 Environment Variables:
   VE_API_BASE              API base URL (default: https://api.vectorengine.ai)
   VE_GPT_IMAGE_API_KEY     API key (required)
   VE_IMAGE_MODEL           Default model (default: gpt-image-2)
-  VE_SVG_MODEL             Model for SVG generation (default: same as VE_IMAGE_MODEL)
   VE_IMAGE_SIZE            Default size (default: 1920x1080)
   VE_IMAGE_N               Default number of images (default: 1)
   VE_IMAGE_QUALITY         Default quality (default: low)
@@ -59,10 +49,6 @@ Examples:
   # Text-to-Image
   $(basename "$0") "A cute baby sea otter"
   $(basename "$0") -s 1024x1536 -q high "A sunset over mountains"
-
-  # SVG Mode - generate SVG with editable <text> elements
-  $(basename "$0") --svg "A presentation slide about AI agents"
-  $(basename "$0") --svg --svg-model doubao-seed-2-0-pro-260215 "Slide: OpenClaw Introduction"
 
   # Image-to-Image (single image)
   $(basename "$0") -i photo.png "Add a rainbow in the sky"
@@ -87,10 +73,6 @@ while [[ $# -gt 0 ]]; do
         --mask)         MASK="$2"; shift 2 ;;
         -o|--output)    OUTPUT_DIR="$2"; shift 2 ;;
         -k|--key)       API_KEY="$2"; shift 2 ;;
-        --svg)          SVG_MODE=1; shift ;;
-        --svg-model)    SVG_MODEL="$2"; shift 2 ;;
-        --svg-base-url) SVG_BASE_URL="$2"; shift 2 ;;
-        --svg-only)     SVG_ONLY=1; shift ;;
         -h|--help)      usage ;;
         --)             shift; break ;;
         -*)             echo "Unknown option: $1" >&2; exit 1 ;;
@@ -111,101 +93,6 @@ if [[ -z "$API_KEY" ]]; then
 fi
 
 mkdir -p "$OUTPUT_DIR"
-
-if [[ "$SVG_MODE" -eq 1 ]]; then
-    echo "Mode: SVG Generation (chat/completions)"
-
-    SVG_API_BASE="${SVG_BASE_URL:-${API_BASE}}"
-
-    PIXEL_W="${SIZE%x*}"
-    PIXEL_H="${SIZE#*x}"
-
-    SVG_W=1792
-    SVG_H=1024
-
-    SYSTEM_PROMPT='You are a professional SVG slide designer for PowerPoint compatibility. Generate a standard SVG that survives PowerPoint "Convert to Shape" without any distortion. Absolute rules:
-
-1. Canvas: width="1792" height="1024" viewBox="0 0 1792 1024" — fixed dimensions, viewBox MUST match canvas exactly
-2. NO transform: never use transform, matrix, scale, rotate, translate, skew on ANY element. All positions via absolute x/y coordinates only
-3. NO nested groups: flat structure only. Use at most ONE level of <g> for background and ONE for text. No <g> inside <g>. After PowerPoint ungroup, every element must retain its original position and proportion
-4. All shapes at fixed original scale: every rect, circle, ellipse, line, polygon uses absolute x/y/width/height/rx/ry/cx/cy values. Lock aspect ratio — no proportional scaling tricks
-5. NO masks, NO clip-path, NO complex filters (blur, shadow, glow), NO gradient with stop-opacity. Simple linearGradient with solid stop-color (#RRGGBB) is allowed. NO feGaussianBlur, feDropShadow, feColorMatrix
-6. Uniform values: border-radius (rx/ry) fixed to 8 or 16, stroke-width fixed to 1 or 2. Paths must be clean with minimal anchor points — no redundant bezier handles
-7. Text: pure basic <text x="..." y="..."> only. NO <tspan>, NO dx/dy offsets, NO text-anchor="middle" or "end", NO transform on text, NO letter-spacing/word-spacing. font-size="24px" for all text. font-family="Microsoft YaHei, SimHei". fill="#RRGGBB" only — NO rgba, NO opacity on text
-8. Minimal structure: the SVG must be so simple that after importing into PowerPoint and pressing "Convert to Shape" then "Ungroup", every shape, proportion, and position remains exactly the same — zero distortion
-9. Layout: title y≈90, subtitle y≈140, body starts y≈220, line spacing 60px. Margins 80px on all sides. Canvas is 1792×1024
-10. Return ONLY the SVG code, no explanations, no markdown fences'
-
-    PROMPT_JSON=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$PROMPT")
-    SYSTEM_JSON=$(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$SYSTEM_PROMPT")
-
-    RESPONSE=$(curl -sS \
-        "${SVG_API_BASE}/chat/completions" \
-        -H "Authorization: Bearer ${API_KEY}" \
-        -H "Content-Type: application/json" \
-        -H "Accept: application/json" \
-        -d "{
-  \"model\": \"${SVG_MODEL}\",
-  \"temperature\": 0.3,
-  \"max_tokens\": 8192,
-  \"messages\": [
-    {\"role\": \"system\", \"content\": ${SYSTEM_JSON}},
-    {\"role\": \"user\", \"content\": ${PROMPT_JSON}}
-  ]
-}")
-
-    python3 -c 'import json,sys; print(json.dumps(json.loads(sys.stdin.read()),indent=2,ensure_ascii=False))' <<< "$RESPONSE" 2>/dev/null || echo "$RESPONSE"
-
-    CONTENT=$(python3 -c '
-import json, sys, re
-resp = json.loads(sys.stdin.read())
-try:
-    content = resp["choices"][0]["message"]["content"]
-except (KeyError, IndexError, TypeError):
-    print("", end="")
-    sys.exit(1)
-svg_match = re.search(r"<svg[\s\S]*</svg>", content)
-if svg_match:
-    print(svg_match.group(0), end="")
-else:
-    print(content, end="")
-' <<< "$RESPONSE" 2>/dev/null)
-
-    if [[ -z "$CONTENT" ]]; then
-        echo "Error: no SVG content in response" >&2
-        exit 1
-    fi
-
-    TIMESTAMP=$(date +%Y%m%d_%H%M%S)
-    SVG_FILE="${OUTPUT_DIR}/gpt_image_${TIMESTAMP}_0.svg"
-    echo "$CONTENT" > "$SVG_FILE"
-    echo "Saved SVG: ${SVG_FILE} ($(wc -c < "$SVG_FILE") bytes)"
-
-    TEXT_COUNT=$(python3 -c '
-import sys, re
-svg = open(sys.argv[1]).read()
-ns = "http://www.w3.org/2000/svg"
-count = svg.count("<text ")
-print(count)
-' "$SVG_FILE" 2>/dev/null || echo "0")
-    echo "SVG <text> elements: ${TEXT_COUNT}"
-
-    if [[ "$SVG_ONLY" -eq 0 ]]; then
-        if command -v rsvg-convert &>/dev/null; then
-            PNG_FILE="${OUTPUT_DIR}/gpt_image_${TIMESTAMP}_0.${FORMAT}"
-            if rsvg-convert -w "$PIXEL_W" -h "$PIXEL_H" -o "$PNG_FILE" "$SVG_FILE" 2>/dev/null; then
-                echo "Rendered PNG: ${PNG_FILE} ($(wc -c < "$PNG_FILE") bytes)"
-            else
-                echo "Warning: rsvg-convert failed, PNG not rendered" >&2
-            fi
-        else
-            echo "Warning: rsvg-convert not found, PNG not rendered. Install: brew install librsvg" >&2
-        fi
-    fi
-
-    echo "Done. SVG mode complete."
-    exit 0
-fi
 
 if [[ ${#IMAGES[@]} -gt 0 ]]; then
     echo "Mode: Image-to-Image (edits)"

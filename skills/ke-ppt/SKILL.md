@@ -1,5 +1,5 @@
 ---
-name: codex-ppt
+name: ke-ppt
 description: Generate visually unified image-based PPT/PPTX decks from articles, reports, papers, notes, or outlines.
 metadata:
   openclaw:

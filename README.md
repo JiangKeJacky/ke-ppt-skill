@@ -95,20 +95,20 @@
 
 ```bash
 npx -y skills@latest add ningzimu/codex-ppt-skill \
-  --skill codex-ppt \
+  --skill ke-ppt \
   --agent codex \
   --global
 ```
 
 安装完成后，重启 Codex 让新 skill 生效。
 
-也可以从 GitHub Releases 下载 `codex-ppt-skill-v*.zip`，解压后把其中的 `codex-ppt` 文件夹放到 `~/.codex/skills/codex-ppt`，然后重启 Codex。
+也可以从 GitHub Releases 下载 `codex-ppt-skill-v*.zip`，解压后把其中的 `ke-ppt` 文件夹放到 `~/.codex/skills/ke-ppt`，然后重启 Codex。
 
 如果你是在本地开发这个仓库，也可以把 skill 目录链接到 Codex skills 目录，方便实时调试修改：
 
 ```bash
 mkdir -p ~/.codex/skills
-ln -s /path/to/codex-ppt-skill/skills/codex-ppt ~/.codex/skills/codex-ppt
+ln -s /path/to/codex-ppt-skill/skills/ke-ppt ~/.codex/skills/ke-ppt
 ```
 
 ### OpenClaw
@@ -116,12 +116,12 @@ ln -s /path/to/codex-ppt-skill/skills/codex-ppt ~/.codex/skills/codex-ppt
 推荐通过 ClawHub 安装：
 
 ```bash
-openclaw skills install codex-ppt
+openclaw skills install ke-ppt
 ```
 
 ClawHub 页面：[clawhub.ai/ningzimu/codex-ppt](https://clawhub.ai/ningzimu/codex-ppt)
 
-如果使用 OpenClaw 的 skill allowlist，需要把 `codex-ppt` 加入允许列表。
+如果使用 OpenClaw 的 skill allowlist，需要把 `ke-ppt` 加入允许列表。
 
 ### Claude Code、Hermes Agent
 
@@ -130,18 +130,18 @@ ClawHub 页面：[clawhub.ai/ningzimu/codex-ppt](https://clawhub.ai/ningzimu/cod
 ```bash
 # Claude Code
 npx -y skills@latest add ningzimu/codex-ppt-skill \
-  --skill codex-ppt \
+  --skill ke-ppt \
   --agent claude-code \
   --global
 
 # Hermes Agent
 npx -y skills@latest add ningzimu/codex-ppt-skill \
-  --skill codex-ppt \
+  --skill ke-ppt \
   --agent hermes-agent \
   --global
 ```
 
-常见目标目录是：Claude Code 使用 `~/.claude/skills/codex-ppt`，Hermes Agent 使用 `~/.hermes/skills/codex-ppt`。
+常见目标目录是：Claude Code 使用 `~/.claude/skills/ke-ppt`，Hermes Agent 使用 `~/.hermes/skills/ke-ppt`。
 
 如果你是在本地开发这个仓库，也可以用软链接替代复制，方便实时调试修改。
 
@@ -159,7 +159,7 @@ npx -y skills@latest add ningzimu/codex-ppt-skill \
 手动排查时也可以直接运行配置命令：
 
 ```bash
-python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
+python3 /path/to/codex-ppt-skill/skills/ke-ppt/scripts/codex_ppt_runtime.py config \
   --api-key "your-api-key" \
   --model gpt-image-2
 ```
@@ -169,7 +169,7 @@ python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py c
 如果使用第三方中转站，再加上 `--base-url`。如果中转站使用自定义模型名，就把 `--model` 改成中转站提供的名称：
 
 ```bash
-python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
+python3 /path/to/codex-ppt-skill/skills/ke-ppt/scripts/codex_ppt_runtime.py config \
   --api-key "your-api-key" \
   --base-url "https://your-openai-compatible-endpoint/v1" \
   --model openai/gpt-image-2
@@ -177,10 +177,10 @@ python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py c
 
 ## 使用方式
 
-在 Codex、Claude Code、OpenClaw 或 Hermes Agent 中明确指定使用 `codex-ppt` skill，例如：
+在 Codex、Claude Code、OpenClaw 或 Hermes Agent 中明确指定使用 `ke-ppt` skill，例如：
 
 ```text
-请使用 codex-ppt skill 把 /path/to/article.md 做成 10 页左右的 PPT。
+请使用 ke-ppt skill 把 /path/to/article.md 做成 10 页左右的 PPT。
 ```
 
 skill 会按以下流程执行：

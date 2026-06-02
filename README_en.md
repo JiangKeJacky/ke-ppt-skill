@@ -95,20 +95,20 @@ Use the `skills` CLI to install this skill into Codex's global skills directory:
 
 ```bash
 npx -y skills@latest add ningzimu/codex-ppt-skill \
-  --skill codex-ppt \
+  --skill ke-ppt \
   --agent codex \
   --global
 ```
 
 Restart Codex after installation so the new skill is picked up.
 
-You can also download `codex-ppt-skill-v*.zip` from GitHub Releases, unzip it, place the contained `codex-ppt` directory at `~/.codex/skills/codex-ppt`, and then restart Codex.
+You can also download `codex-ppt-skill-v*.zip` from GitHub Releases, unzip it, place the contained `ke-ppt` directory at `~/.codex/skills/ke-ppt`, and then restart Codex.
 
 If you are developing this repository locally, you can instead symlink the skill directory into the Codex skills directory so changes are reflected immediately:
 
 ```bash
 mkdir -p ~/.codex/skills
-ln -s /path/to/codex-ppt-skill/skills/codex-ppt ~/.codex/skills/codex-ppt
+ln -s /path/to/codex-ppt-skill/skills/ke-ppt ~/.codex/skills/ke-ppt
 ```
 
 ### OpenClaw
@@ -116,12 +116,12 @@ ln -s /path/to/codex-ppt-skill/skills/codex-ppt ~/.codex/skills/codex-ppt
 Install from ClawHub:
 
 ```bash
-openclaw skills install codex-ppt
+openclaw skills install ke-ppt
 ```
 
 ClawHub page: [clawhub.ai/ningzimu/codex-ppt](https://clawhub.ai/ningzimu/codex-ppt)
 
-If you use OpenClaw skill allowlists, add `codex-ppt` to the allowed skills.
+If you use OpenClaw skill allowlists, add `ke-ppt` to the allowed skills.
 
 ### Claude Code and Hermes Agent
 
@@ -130,18 +130,18 @@ These agents can read `SKILL.md` skills. The recommended path is to install with
 ```bash
 # Claude Code
 npx -y skills@latest add ningzimu/codex-ppt-skill \
-  --skill codex-ppt \
+  --skill ke-ppt \
   --agent claude-code \
   --global
 
 # Hermes Agent
 npx -y skills@latest add ningzimu/codex-ppt-skill \
-  --skill codex-ppt \
+  --skill ke-ppt \
   --agent hermes-agent \
   --global
 ```
 
-Common target directories are `~/.claude/skills/codex-ppt` for Claude Code and `~/.hermes/skills/codex-ppt` for Hermes Agent.
+Common target directories are `~/.claude/skills/ke-ppt` for Claude Code and `~/.hermes/skills/ke-ppt` for Hermes Agent.
 
 If you are developing this repository locally, you can use a symlink instead of copying so changes are reflected immediately.
 
@@ -159,7 +159,7 @@ Only after API/CLI fallback has been intentionally selected should the agent che
 For manual troubleshooting, you can also run the config command directly:
 
 ```bash
-python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
+python3 /path/to/codex-ppt-skill/skills/ke-ppt/scripts/codex_ppt_runtime.py config \
   --api-key "your-api-key" \
   --model gpt-image-2
 ```
@@ -169,7 +169,7 @@ python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py c
 If you use a third-party proxy, add `--base-url`. If the proxy uses a custom model name, replace `--model` with the name provided by that proxy:
 
 ```bash
-python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
+python3 /path/to/codex-ppt-skill/skills/ke-ppt/scripts/codex_ppt_runtime.py config \
   --api-key "your-api-key" \
   --base-url "https://your-openai-compatible-endpoint/v1" \
   --model openai/gpt-image-2
@@ -177,10 +177,10 @@ python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py c
 
 ## Usage
 
-Ask Codex, Claude Code, OpenClaw, or Hermes Agent and explicitly specify the `codex-ppt` skill, for example:
+Ask Codex, Claude Code, OpenClaw, or Hermes Agent and explicitly specify the `ke-ppt` skill, for example:
 
 ```text
-Use the codex-ppt skill to turn /path/to/article.md into a roughly 10-slide PPT.
+Use the ke-ppt skill to turn /path/to/article.md into a roughly 10-slide PPT.
 ```
 
 The skill follows this workflow:

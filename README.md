@@ -1,0 +1,222 @@
+# Codex PPT Skill
+
+[![English](https://img.shields.io/badge/docs-English-blue)](README_en.md) [![ClawHub](https://img.shields.io/badge/ClawHub-codex--ppt-cd3b35)](https://clawhub.ai/ningzimu/codex-ppt) [![GitHub stars](https://img.shields.io/github/stars/ningzimu/codex-ppt-skill?style=flat&logo=github&label=stars)](https://github.com/ningzimu/codex-ppt-skill/stargazers) [![GitHub forks](https://img.shields.io/github/forks/ningzimu/codex-ppt-skill?style=flat&logo=github&label=forks)](https://github.com/ningzimu/codex-ppt-skill/forks)
+
+一个面向 Codex 的 PPT 生成 skill，也可在 Claude Code、OpenClaw、Hermes Agent 等支持 `SKILL.md` 的 agent 中使用；在这些非 Codex 环境中通常需要配置 `gpt-image-2` 或第三方 OpenAI 兼容格式的生图 API。它把文章、报告、论文、课程笔记等内容转换成“整页图片式”的演示文稿：先规划大纲和视觉风格，再生成每页幻灯片图片，最后用本地脚本组装为 `.pptx`。
+
+> [!TIP]
+> 本 skill 负责从文章、报告、大纲或想法生成图片式 PPT，适合强视觉表达，但页面元素本身不可直接编辑。如果你需要进一步转换成可编辑 PPT，可以在生成完成后尝试使用 [image-to-editable-ppt-skill](https://github.com/ningzimu/image-to-editable-ppt-skill) 进行转换。
+>
+> 关于 `codex-ppt` 和 `image-to-editable-ppt` 这两个技能的详细介绍，参见 [skill_duo_intro.pdf](assets/skill_duo_intro.pdf)。该 PPT 由 `codex-ppt` skill 生成，提示词为：“请分别阅读 Codex PPT和 Image to Editable PPT 这两个技能的内容，然后用 Codex PPT 帮我做一个PPT吧，20页，每个技能的介绍10页。”
+
+> [!NOTE]
+> 想查看更多用户用这个 skill 做出的 PPT 效果，可以前往置顶 Issue 的案例展示区：[欢迎分享 codex-ppt 使用案例和 PPT 效果](https://github.com/ningzimu/codex-ppt-skill/issues/34)。
+
+## 温馨提示
+
+这个 skill 主要给大家提供一个还不错的 PPT 生成流程。为了尽量通用，它的流程设计会稍微复杂一些；复杂也会带来不稳定性或者冗余性。比如它同时兼容 Codex 内置生图和 API/CLI fallback 生图，也会兼容有无子 agent 可用这两种情况，但大部分人日常使用时其实只会固定走其中一条路线。
+
+建议大家在走通自己常用的路线之后，让 AI 帮你改一下这个 skill，把你的偏好固定下来，省得每次都重新选择。比如固定使用内置生图或固定使用某个 API，固定是否使用子 agent，固定常用输出目录、风格、页数节奏等。
+
+另外，如果你在做 PPT 的过程中遇到了自己喜欢的版式或排版，无论是这个 skill 做出来的，还是从别的地方找到的 PPT 风格图片，都可以让 AI 加到这个 skill 的 `references/` 里，逐步形成你自己的风格库。Skills 本质上是非常个性化的流程，鼓励大家在使用这个 skill 的基础上，按自己的偏好持续调优，让它更适配自己的工作流。
+
+关于 skills 如何设计和使用，可以参考 [good-skill-design.pptx](assets/good-skill-design.pptx)。这个 PPT 也是用本 skill 做的，采用的是手绘技术解释风；内容基于 Claude 在设计 skills 方面的最佳实践文章 [The Complete Guide to Building Skills for Claude](https://resources.anthropic.com/hubfs/The-Complete-Guide-to-Building-Skill-for-Claude.pdf)。祝大家玩得愉快！
+
+## 特点
+
+- 在 Codex 中优先使用内置生图和编辑图能力；在其他 agent 中可使用本地 API/CLI fallback
+- 同时支持 Codex、Claude Code、OpenClaw、Hermes Agent 等多种 agent 环境
+- 支持使用第三方 OpenAI 兼容接口提供的 `gpt-image-2` 生图模型
+- 图片式 PPT：每页幻灯片是一张完整 16:9 图片，适合强视觉表达
+- 支持为某一页指定必须插入的图片素材，例如论文原图、实验结果图、截图或架构图
+- 风格参考库：内置清爽专业、科研答辩、电子墨水杂志、手绘技术解释、仪表盘等多种风格说明
+- 整套 PPT 保持统一视觉语言，但每页会按内容语义调整版式，避免机械重复
+- 本地组装脚本：将 `slide_01.png`、`slide_02.png` 等图片打包成 PowerPoint
+
+## 生成效果
+
+下面是一套技术分享 PPT 的生成效果示例。每页都是由 `gpt-image-2` 生成的完整 16:9 幻灯片图片，再由本地脚本组装为 PPTX。
+
+![生成 PPT 效果示例](assets/slides_example.png)
+
+下面是一套论文答辩风案例，来源于论文 [Attention Is All You Need](https://arxiv.org/abs/1706.03762)。它展示了如何在指定页中插入论文原始图片作为输入素材，例如模型架构图、attention 模块图和 attention 可视化图，并围绕这些图片生成统一风格的 PPT（见 Issue #14）。
+
+![论文原图插入案例](assets/paper-figures-example.png)
+
+## 风格示例
+
+以下是已生成预览图的风格，示例图均由 `gpt-image-2` 生成，用于帮助用户在开始制作前选择视觉方向。
+
+| 清爽专业风 | 创意杂志风 |
+| --- | --- |
+| ![清爽专业风](assets/style-previews/clean-professional.png) | ![创意杂志风](assets/style-previews/creative-magazine.png) |
+| 电子墨水杂志风 | 数据仪表盘风 |
+| ![电子墨水杂志风](assets/style-previews/e-ink-magazine.png) | ![数据仪表盘风](assets/style-previews/data-dashboard.png) |
+| 复古扁平插画风 | 手绘技术解释风 |
+| ![复古扁平插画风](assets/style-previews/retro-flat-illustration.png) | ![手绘技术解释风](assets/style-previews/handdrawn-technical.png) |
+| 手绘白板风 | 温暖手工风 |
+| ![手绘白板风](assets/style-previews/handdrawn-whiteboard.png) | ![温暖手工风](assets/style-previews/warm-handmade.png) |
+| 科研答辩风 |  |
+| ![科研答辩风](assets/style-previews/scientific-defense.png) |  |
+
+## 输出结构
+
+每个 PPT 会生成一个独立项目目录：
+
+```text
+{基础目录}/{PPT名称}/
+├── origin_image/
+│   ├── slide_01.png
+│   ├── slide_02.png
+│   └── ...
+├── outline.md
+├── speech.md
+└── {PPT名称}.pptx
+```
+
+`origin_image/` 只放正式页图片，并按 `slide_01.png`、`slide_02.png` 这样的顺序命名。样张确认时也直接使用对应页的正式文件名；如果要保留废稿或对比图，放到项目根目录或单独的 `drafts/` 目录，不要放进 `origin_image/`。
+
+`speech.md` 会在组装时写入 PPT 的每页备注。建议使用 `## Slide 1: 标题`、`## Slide 2: 标题` 这样的标题格式，脚本会按页码匹配。
+
+## 适用场景
+
+- 技术文章转分享 PPT
+- 论文或报告转演示稿
+- 课程笔记转课件
+- 科研项目申报、中期检查、结题验收和论文答辩
+- 商业汇报、产品介绍、调研总结
+- 需要强视觉统一性的图片式演示文稿
+
+## 安装
+
+### Codex
+
+推荐使用 `skills` CLI 安装到 Codex 的全局 skills 目录：
+
+```bash
+npx -y skills@latest add ningzimu/codex-ppt-skill \
+  --skill codex-ppt \
+  --agent codex \
+  --global
+```
+
+安装完成后，重启 Codex 让新 skill 生效。
+
+也可以从 GitHub Releases 下载 `codex-ppt-skill-v*.zip`，解压后把其中的 `codex-ppt` 文件夹放到 `~/.codex/skills/codex-ppt`，然后重启 Codex。
+
+如果你是在本地开发这个仓库，也可以把 skill 目录链接到 Codex skills 目录，方便实时调试修改：
+
+```bash
+mkdir -p ~/.codex/skills
+ln -s /path/to/codex-ppt-skill/skills/codex-ppt ~/.codex/skills/codex-ppt
+```
+
+### OpenClaw
+
+推荐通过 ClawHub 安装：
+
+```bash
+openclaw skills install codex-ppt
+```
+
+ClawHub 页面：[clawhub.ai/ningzimu/codex-ppt](https://clawhub.ai/ningzimu/codex-ppt)
+
+如果使用 OpenClaw 的 skill allowlist，需要把 `codex-ppt` 加入允许列表。
+
+### Claude Code、Hermes Agent
+
+这些 agent 都可以读取 `SKILL.md` 形式的 skill。推荐同样使用 `skills` CLI 安装：
+
+```bash
+# Claude Code
+npx -y skills@latest add ningzimu/codex-ppt-skill \
+  --skill codex-ppt \
+  --agent claude-code \
+  --global
+
+# Hermes Agent
+npx -y skills@latest add ningzimu/codex-ppt-skill \
+  --skill codex-ppt \
+  --agent hermes-agent \
+  --global
+```
+
+常见目标目录是：Claude Code 使用 `~/.claude/skills/codex-ppt`，Hermes Agent 使用 `~/.hermes/skills/codex-ppt`。
+
+如果你是在本地开发这个仓库，也可以用软链接替代复制，方便实时调试修改。
+
+## 生图模型配置
+
+只有在需要通过 API/CLI fallback 生图时，才需要配置生图模型。指定图片分辨率、提高质量或要求修改某一页，本身不会触发第三方 API 配置；如果 Codex 内置图片生成工具可用，会继续使用内置工具。典型需要配置的情况包括：
+
+- 在 Codex 中使用第三方 API 或兼容中转站接入时，通常无法使用内置的图片生成工具。
+- 在 Claude Code、OpenClaw、Hermes Agent 等环境中使用该 skill。
+
+如果你是通过 GPT 会员订阅使用 Codex，并且 Codex 内置图片生成工具可用，则不需要配置 `gpt-image-2` 生图模型；这种情况下 Codex 已经内置了该图片生成能力。即使你在提示词里明确说“使用 `gpt-image-2`”，也应优先理解为使用 Codex 内置图片生成工具，而不是切换到本地 API/CLI fallback。
+
+只有在已经明确选择 API/CLI fallback 时，agent 才应该检查 `~/.codex-ppt-skill/.env` 并在缺少配置时报 `OPENAI_API_KEY`。不要在 Codex 内置图片生成工具可用时，因为用户提到 `gpt-image-2` 就要求配置 API key。`base URL` 只有使用第三方中转站时才需要配置，模型名缺省为 `gpt-image-2`，只有中转站要求自定义模型名时才需要修改。配置完成后 Codex、Claude Code、OpenClaw、Hermes Agent 会复用同一套配置。
+
+手动排查时也可以直接运行配置命令：
+
+```bash
+python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
+  --api-key "your-api-key" \
+  --model gpt-image-2
+```
+
+其中 `--api-key` 是你的 API key；`--model` 是图片模型名，默认可使用 `gpt-image-2`。配置会写入 `~/.codex-ppt-skill/.env`。不要把 API key 写进项目目录或提交到仓库。
+
+如果使用第三方中转站，再加上 `--base-url`。如果中转站使用自定义模型名，就把 `--model` 改成中转站提供的名称：
+
+```bash
+python3 /path/to/codex-ppt-skill/skills/codex-ppt/scripts/codex_ppt_runtime.py config \
+  --api-key "your-api-key" \
+  --base-url "https://your-openai-compatible-endpoint/v1" \
+  --model openai/gpt-image-2
+```
+
+## 使用方式
+
+在 Codex、Claude Code、OpenClaw 或 Hermes Agent 中明确指定使用 `codex-ppt` skill，例如：
+
+```text
+请使用 codex-ppt skill 把 /path/to/article.md 做成 10 页左右的 PPT。
+```
+
+skill 会按以下流程执行：
+
+1. 阅读内容并规划 PPT 大纲
+2. 生成 `outline.md`，并请求你确认页数、标题和每页要点
+3. 给出 2-3 个视觉风格选项，并推荐一个让用户确认
+4. 在首次生图前说明将使用的生图方式，并请求你确认
+5. 使用确认后的图片生成后端生成 1 页样张，让用户确认风格、版式节奏和文字质量
+6. 创建 PPT 项目目录
+7. 使用同一图片生成后端逐页生成全部幻灯片图片
+8. 检查文字清晰度、风格一致性和内容完整性
+9. 生成 `speech.md`
+10. 使用 `assemble_ppt.py` 组装 `.pptx`
+
+## 使用技巧
+
+- 默认脚本分辨率是 2K 16:9 横屏。如果生成的幻灯片图片比较模糊，尤其是文字较多的页面，可以让当前 agent 改用 4K 分辨率生成图片。
+- 如果只是不满意某一页的内容、排版、配色或文字表达，可以直接让当前 agent 针对这一页做细致修改，不需要整套 PPT 重新生成。
+- 你也可以提供喜欢的 PPT 风格参考，可以是一张截图、多张截图，或完整 PPT/PDF。建议先让当前 agent 分析参考材料的配色、版式、字体和视觉元素，再按这个风格生成新 PPT。生成满意后，也可以让 agent 把这套风格保存到本技能的 `references/` 目录里，方便以后复用。
+- 如果需要插入论文原图、实验结果图、截图或架构图，可以在大纲中指定这些图片对应的页码和用途。
+
+## QA
+
+- 飞书文档：[codex-ppt 常见问题与使用说明](https://icn42st819e7.feishu.cn/wiki/WKIvw81DqinKzcknjiZcbhTMniW?from=from_copylink)
+
+## 交流群
+
+扫描二维码加入 Skill 交流群，分享使用经验、反馈问题，并获取更新通知。
+
+<img src="assets/codex-ppt-community-qr.png" alt="Codex PPT Skill 交流群二维码" width="220">
+
+## 许可证
+
+MIT
+
+## Star History
+
+[![Star History Chart](https://api.star-history.com/svg?repos=ningzimu/codex-ppt-skill&type=Date)](https://www.star-history.com/#ningzimu/codex-ppt-skill&Date)
